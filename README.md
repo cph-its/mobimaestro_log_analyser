@@ -91,3 +91,9 @@ duration between consecutive pairs of disconnect-connect pairs.
 Disconnects are expected to be followed by a connect. If several disconnects
 occur without a connect inbetween, then only the last disconnect-connect
 duration will be used.
+
+Uptime currently does not split offline periods when they cover multiple months.
+This means the entire downtime is computed as being part of the month where the
+downtime ends. This should be probably be improved.
+
+

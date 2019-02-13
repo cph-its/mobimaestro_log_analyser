@@ -17,6 +17,11 @@ CREATE TABLE events
 COPY events(at,type,object,event,description) FROM '/docker-entrypoint-initdb.d/events.csv' DELIMITER ';' CSV HEADER;
 
 
+CREATE INDEX idx_at ON events(at);
+CREATE INDEX idx_type ON events(type);
+CREATE INDEX idx_object ON events(object);
+CREATE INDEX idx_event ON events(event);
+
 
 -- find pairs of consecutive disconnect-connect pairs for each device
 DROP TABLE IF EXISTS downtime;
@@ -65,7 +70,7 @@ event IN (
 ); 
 
 
--- group by device
+-- by device
 DROP TABLE IF EXISTS by_device;
 SELECT
 type,
@@ -84,7 +89,7 @@ FROM downtime
 GROUP BY type,object,ag,type_code,manufacturer, nr;
 
 
--- group by device type
+-- by device type
 DROP TABLE IF EXISTS by_type;
 SELECT
 type,
@@ -97,7 +102,7 @@ INTO TABLE by_type
 FROM downtime
 GROUP BY type;
 
--- group by months and type
+-- by months and type
 DROP TABLE IF EXISTS by_month;
 SELECT
 year,
@@ -124,7 +129,34 @@ GROUP BY year,month,type
 ORDER BY type,year,month;
 
 
+-- devices where the last event was a disconnect
+DROP TABLE IF EXISTS by_last_seen;
+select *
+INTO TABLE by_last_seen
+from
+(select e.type, e.object, e.at, e.event, e.description
+from (
+   select object, max(at) as latest
+   from events group by object
+) as x inner join events as e on e.object = x.object and e.at = x.latest) AS e
+where event IN (
+	'Disconnected due to fatal error',
+	'No communication',
+	'Disconnected',
+	'Connection problem',
+	'RSU communication error',
+	'RSU not available'
+	'Communication failed',
+	'Connection problem',
+	'Connection stopped',
+	'Connection error',
+	'Connect error'
+)
+order by type, at asc;
+
+
 -- export to CSV
 COPY (SELECT * from by_device ORDER BY type,manufacturer,uptime ASC) TO '/docker-entrypoint-initdb.d/by_device.csv' DELIMITER ',' CSV HEADER;
 COPY (SELECT * from by_type ORDER BY type) TO '/docker-entrypoint-initdb.d/by_type.csv' DELIMITER ',' CSV HEADER;
 COPY (SELECT * from by_month ORDER BY type,year,month) TO '/docker-entrypoint-initdb.d/by_month.csv' DELIMITER ',' CSV HEADER;
+COPY (SELECT * from by_last_seen ORDER BY type, at ASC) TO '/docker-entrypoint-initdb.d/by_last_seen.csv' DELIMITER ',' CSV HEADER;
