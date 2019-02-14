@@ -70,6 +70,38 @@ event IN (
 ); 
 
 
+-- split downtime periods on month boundaries
+DROP TABLE IF EXISTS downtime_periods;
+SELECT
+downtime.object,
+downtime.type,
+downtime.manufacturer,
+downtime.ag,
+downtime.type_code,
+downtime.nr,
+extract('year' FROM period)::int AS year,
+extract('month' FROM period)::int AS month,
+GREATEST(period, downtime.starting) AS starting,
+LEAST(period + interval '1 month', downtime.ending) AS ending,
+LEAST(period + interval '1 month', downtime.ending) - GREATEST(period, downtime.starting) AS duration
+INTO TABLE downtime_periods
+FROM
+downtime
+LEFT JOIN LATERAL
+generate_series(
+	date_trunc('month', starting::timestamp),
+	date_trunc('month', ending::timestamp),
+	interval '1 month'
+) period ON true
+ORDER BY object, starting;
+
+CREATE INDEX idx_year ON downtime_periods(year);
+CREATE INDEX idx_month ON downtime_periods(month);
+CREATE INDEX idx_type ON downtime_periods(type);
+CREATE INDEX idx_object ON downtime_periods(object);
+CREATE INDEX idx_duration ON downtime_periods(duration);
+
+
 -- by device
 DROP TABLE IF EXISTS by_device;
 SELECT
@@ -102,6 +134,7 @@ INTO TABLE by_type
 FROM downtime
 GROUP BY type;
 
+
 -- by months and type
 DROP TABLE IF EXISTS by_month;
 SELECT
@@ -124,7 +157,7 @@ COUNT(type) AS disconnects,
 justify_interval(AVG(duration)) AS avg_duration,
 justify_interval(MAX(duration)) AS max_duration
 INTO TABLE by_month
-FROM downtime
+FROM downtime_periods
 GROUP BY year,month,type
 ORDER BY type,year,month;
 
@@ -160,3 +193,4 @@ COPY (SELECT * from by_device ORDER BY type,manufacturer,uptime ASC) TO '/docker
 COPY (SELECT * from by_type ORDER BY type) TO '/docker-entrypoint-initdb.d/by_type.csv' DELIMITER ',' CSV HEADER;
 COPY (SELECT * from by_month ORDER BY type,year,month) TO '/docker-entrypoint-initdb.d/by_month.csv' DELIMITER ',' CSV HEADER;
 COPY (SELECT * from by_last_seen ORDER BY type, at ASC) TO '/docker-entrypoint-initdb.d/by_last_seen.csv' DELIMITER ',' CSV HEADER;
+
