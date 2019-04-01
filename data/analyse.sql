@@ -17,10 +17,10 @@ CREATE TABLE events
 COPY events(at,type,object,event,description) FROM '/docker-entrypoint-initdb.d/events.csv' DELIMITER ';' CSV HEADER;
 
 
-CREATE INDEX idx_at ON events(at);
-CREATE INDEX idx_type ON events(type);
-CREATE INDEX idx_object ON events(object);
-CREATE INDEX idx_event ON events(event);
+CREATE INDEX idx_events_at ON events(at);
+CREATE INDEX idx_events_type ON events(type);
+CREATE INDEX idx_events_object ON events(object);
+CREATE INDEX idx_events_event ON events(event);
 
 
 -- guess first and last month
@@ -111,11 +111,11 @@ generate_series(
 ) period ON true
 ORDER BY object, starting;
 
-CREATE INDEX idx_year ON downtime_periods(year);
-CREATE INDEX idx_month ON downtime_periods(month);
-CREATE INDEX idx_type ON downtime_periods(type);
-CREATE INDEX idx_object ON downtime_periods(object);
-CREATE INDEX idx_duration ON downtime_periods(duration);
+CREATE INDEX idx_downtime_year ON downtime_periods(year);
+CREATE INDEX idx_downtime_month ON downtime_periods(month);
+CREATE INDEX idx_downtime_type ON downtime_periods(type);
+CREATE INDEX idx_downtime_object ON downtime_periods(object);
+CREATE INDEX idx_downtime_duration ON downtime_periods(duration);
 
 
 -- by device
@@ -151,13 +151,29 @@ INTO TABLE by_type
 FROM downtime,range
 GROUP BY type,seconds;
 
+-- by device type and manufacturer
+DROP TABLE IF EXISTS by_type_and_manufacturer;
+SELECT
+type,
+manufacturer,
+COUNT(DISTINCT object) as devices,
+ROUND( CAST( 100-(100*date_part('epoch', SUM(duration))/(range.seconds*COUNT(DISTINCT object))) AS numeric), 2) AS up_percentage,
+COUNT(type) AS disconnects,
+COUNT(type)/COUNT(DISTINCT object) AS "disconnects/device",
+justify_interval(SUM(duration)) AS sum,
+justify_interval(AVG(duration)) AS avg,
+justify_interval(MAX(duration)) AS max
+INTO TABLE by_type_and_manufacturer
+FROM downtime,range
+GROUP BY type,manufacturer,seconds;
 
 -- by months and type
 DROP TABLE IF EXISTS by_month;
 SELECT
+type,
+manufacturer,
 year,
 month,
-type,
 COUNT(DISTINCT object) as devices,
 ROUND(
 	CAST(
@@ -175,13 +191,14 @@ justify_interval(AVG(duration)) AS avg_duration,
 justify_interval(MAX(duration)) AS max_duration
 INTO TABLE by_month
 FROM downtime_periods
-GROUP BY year,month,type
-ORDER BY type,year,month;
+GROUP BY year,month,type,manufacturer
+ORDER BY type,manufacturer,year,month;
 
 
 -- by months and device
-DROP TABLE IF EXISTS by_month;
+DROP TABLE IF EXISTS by_device_and_month;
 SELECT
+type,
 object,
 year,
 month,
@@ -196,12 +213,13 @@ ROUND(
 	2
 ) AS up_percentage,
 COUNT(type) AS disconnects,
-justify_interval(AVG(duration)) AS avg_duration,
-justify_interval(MAX(duration)) AS max_duration
---INTO TABLE by_month
+justify_interval(SUM(duration)) AS sum,
+justify_interval(AVG(duration)) AS avg,
+justify_interval(MAX(duration)) AS max
+INTO TABLE by_device_and_month
 FROM downtime_periods
-GROUP BY year,month,object
-ORDER BY object,year,month;
+GROUP BY year,month,object,type
+ORDER BY type,object,year,month;
 
 
 -- devices where the last event was a disconnect
@@ -234,5 +252,6 @@ ORDER BY type, at ASC;
 COPY (SELECT * from by_device ORDER BY type,manufacturer,up_percentage ASC) TO '/docker-entrypoint-initdb.d/by_device.csv' DELIMITER ',' CSV HEADER;
 COPY (SELECT * from by_type ORDER BY type) TO '/docker-entrypoint-initdb.d/by_type.csv' DELIMITER ',' CSV HEADER;
 COPY (SELECT * from by_month ORDER BY type,year,month) TO '/docker-entrypoint-initdb.d/by_month.csv' DELIMITER ',' CSV HEADER;
+COPY (SELECT * from by_device_and_month ORDER BY type,object,year,month) TO '/docker-entrypoint-initdb.d/by_device_and_month.csv' DELIMITER ',' CSV HEADER;
 COPY (SELECT * from by_last_seen ORDER BY type, at ASC) TO '/docker-entrypoint-initdb.d/by_last_seen.csv' DELIMITER ',' CSV HEADER;
 

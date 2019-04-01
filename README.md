@@ -24,7 +24,7 @@ The file must be located at data/events.csv
 
 From MobiMaestro, select System > Event History. Select the "Disconnect analysis" filter and laod it.
 Make sure the following columns are shown, and nothing else, and in the correct order:
-	Timestamp, Object Type, Object, Event, Description.
+	Timestamp, Object Type, Object,  Event, Description.
 
 Then click "Search", and then "Export results..." to save as a .csv file.
 
