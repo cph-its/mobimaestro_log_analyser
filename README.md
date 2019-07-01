@@ -63,7 +63,36 @@ docker exec -it `cat container_id` psql -U postgres
 Now you're in PostgreSQL, with raw data already import to the "events" table,
 and statistics in the "stats" table. You can do any SQL queries you like, eg:
 
-postgres=# select * from stats order by uptime asc;
+postgres=# \d
+                    List of relations
+ Schema |           Name           |   Type   |  Owner   
+--------+--------------------------+----------+----------
+ public | by_device                | table    | postgres
+ public | by_device_and_month      | table    | postgres
+ public | by_last_seen             | table    | postgres
+ public | by_month                 | table    | postgres
+ public | by_type                  | table    | postgres
+ public | by_type_and_manufacturer | table    | postgres
+ public | downtime                 | table    | postgres
+ public | downtime_periods         | table    | postgres
+ public | events                   | table    | postgres
+ public | events_id_seq            | sequence | postgres
+ public | range                    | table    | postgres
+(11 rows)
+
+postgres=# select type,ag,manufacturer,disconnects,up_percentage from by_device order by up_percentage ASC;
+         type          |            ag            | manufacturer | disconnects | up_percentage 
+-----------------------+--------------------------+--------------+-------------+---------------
+ RSMP traffic light    | 2604                     | DNQ          |        1846 |         11.34
+ RSMP traffic light    | 3112                     | DNQ          |        2385 |         11.58
+ RSMP traffic light    | 2613                     | DNQ          |        5042 |         28.30
+ RSMP traffic light    | 2907                     | DNQ          |       16167 |         41.48
+ Radar                 | 1207                     | SMI          |          95 |         43.15
+ RSMP traffic light    | 1105                     | DNQ          |          45 |         44.81
+ RSMP VMS              | 0606                     | ITT          |          82 |         46.00
+
+ 
+
 
 If you want to output data to CSV, look at analyse.sql to see how it's done.
 
