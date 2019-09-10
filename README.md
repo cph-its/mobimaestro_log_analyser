@@ -22,9 +22,10 @@ A .csv file exported from MobiMaestro, containing events about connects and disc
 The file is expected to contain a CVS header.
 The file must be located at data/events.csv
 
-From MobiMaestro, select System > Event History. Select the "Disconnect analysis" filter and laod it.
+From MobiMaestro, select System > Event History. Select the "Disconnect analysis" filter and load it. If you don't have this filter, you need to set up a filter that includes all the equipment and system types you're interested in, and all connect and disconenct events for these types of equipment/systems.
+
 Make sure the following columns are shown, and nothing else, and in the correct order:
-	Timestamp, Object Type, Object,  Event, Description.
+Timestamp, Object Type, Object,  Event, Description.
 
 Then click "Search", and then "Export results..." to save as a .csv file.
 
@@ -49,7 +50,9 @@ You must set the total number of days the dataset cover in the analyze.sql file.
 
 ### Just give me the CSV output
 Run:
+```
 docker run -v `pwd`/data:/docker-entrypoint-initdb.d --rm postgres
+```
 
 Press Control-C to stop the container.
 The output will be located in data/result.csv.
@@ -57,12 +60,15 @@ The output will be located in data/result.csv.
 
 ### Running custom SQL queries
 Run:
+```
 docker run -v `pwd`/data:/docker-entrypoint-initdb.d --rm -d postgres > container_id
 docker exec -it `cat container_id` psql -U postgres
+```
 
 Now you're in PostgreSQL, with raw data already import to the "events" table,
 and statistics in the "stats" table. You can do any SQL queries you like, eg:
 
+```
 postgres=# \d
                     List of relations
  Schema |           Name           |   Type   |  Owner   
@@ -90,6 +96,7 @@ postgres=# select type,ag,manufacturer,disconnects,up_percentage from by_device 
  Radar                 | 1207                     | SMI          |          95 |         43.15
  RSMP traffic light    | 1105                     | DNQ          |          45 |         44.81
  RSMP VMS              | 0606                     | ITT          |          82 |         46.00
+```
 
  
 
@@ -98,9 +105,11 @@ If you want to output data to CSV, look at analyse.sql to see how it's done.
 
 When done, you might want to exit sql, and perhaps exit the container and stop it:
 
+```
 postgres=# \q
 root@71364c7e3116 :/# exit
 $ docker stop `cat container_id`; rm container_id;
+```
 
 ## Notes
 
