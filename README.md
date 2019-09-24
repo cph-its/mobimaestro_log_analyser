@@ -47,26 +47,49 @@ All datasets are expected to cover whole months. Make sure this is true when you
 
 You must set the total number of days the dataset cover in the analyze.sql file.
 
+On Windows, just must open Docker settings, and go to Shared Drives and active the drive where the
+files are located (typically C).
 
 ### Just give me the CSV output
-Run:
+
+Linux/Mac:
 ```
 docker run -v `pwd`/data:/docker-entrypoint-initdb.d --rm postgres
 ```
+Press Control-C to stop the container. (Cntr-C on Windows)
 
-Press Control-C to stop the container.
+
+Windows:
+Run this in PowerShell:
+```
+docker run -v `pwd`\data:/docker-entrypoint-initdb.d --rm postgres
+```
+Press Cntr-C to stop the container.
+
+Note that Windows uses backslash instead of slash as path separater, but the part after the colon use a slash, since it's a path inside the Linux container.
+
+
 The output will be located in data/result.csv.
 
-
 ### Running custom SQL queries
-Run:
+Linux/Mac:
 ```
 docker run -v `pwd`/data:/docker-entrypoint-initdb.d --rm -d postgres > container_id
 docker exec -it `cat container_id` psql -U postgres
 ```
 
-Now you're in PostgreSQL, with raw data already import to the "events" table,
-and statistics in the "stats" table. You can do any SQL queries you like, eg:
+Windows:
+Run this in PowerShell:
+```
+docker run -v `pwd`\data:/docker-entrypoint-initdb.d --rm -d postgres > container_id
+docker exec -it `cat container_id` psql -U postgres
+```
+
+Note that Windows uses backslash instead of slash as path separater, but the part after the colon use a slash, since it's a path inside the Linux container.
+
+The container id is stored in a file called 'container_id', to make it easier to later stop the container.
+
+Now you're in PostgreSQL, with raw data already imported to the "events" table, and statistics in the "stats" table. You can do any SQL queries you like, eg:
 
 ```
 postgres=# \d
@@ -98,16 +121,20 @@ postgres=# select type,ag,manufacturer,disconnects,up_percentage from by_device 
  RSMP VMS              | 0606                     | ITT          |          82 |         46.00
 ```
 
- 
-
-
 If you want to output data to CSV, look at analyse.sql to see how it's done.
 
-When done, you might want to exit sql, and perhaps exit the container and stop it:
+### Exiting
+When done, you might want to exit sql and exit the container:
 
 ```
 postgres=# \q
 root@71364c7e3116 :/# exit
+```
+
+The container is still running. You can stop if with: 
+
+Mac/Linux:
+```
 $ docker stop `cat container_id`; rm container_id;
 ```
 
@@ -116,17 +143,13 @@ $ docker stop `cat container_id`; rm container_id;
 ### Docker files
 The tool uses a docker container to run PostgreSQL and perform the analysis. 
 The folder data/ is mounted as a volume to read the input and save the output.
-The volume is mounted at /docker-entrypoint-initdb.d. Any .sql files in
-the folder is run be default by the PostgresSQL iamge after the database
-has been initialied. So the file data/analyze.sql will be run when the container
-is started.
-The file data/analys.sql contains the SQL commands to import the csv file, run
-the analysis and store the result in a csv file.
+The volume is mounted at /docker-entrypoint-initdb.d. Any .sql files in the folder is run be default by the PostgresSQL iamge after the database has been initialied. So the file data/analyze.sql will be run when the container is started.
+The file data/analys.sql contains the SQL commands to import the csv file, run the analysis and store the result in a csv file.
 
 ### Uptime computation
-The Postgres lag() function is used to compute the
-duration between consecutive pairs of disconnect-connect pairs.
-Disconnects are expected to be followed by a connect. If several disconnects
-occur without a connect inbetween, then only the last disconnect-connect
-duration will be used.
+The Postgres lag() function is used to compute the duration between consecutive pairs of disconnect-connect pairs.
+Disconnects are expected to be followed by a connect. If several disconnects occur without a connect in between, then only the last disconnect-connect duration will be used.
+
+All statistics is aggregated by month. Downtime periods covering more than one month are split correctly into the relevant months.
+
 
