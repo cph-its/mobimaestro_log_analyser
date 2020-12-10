@@ -47,14 +47,14 @@ All datasets are expected to cover whole months. Make sure this is true when you
 
 You must set the total number of days the dataset cover in the analyze.sql file.
 
-On Windows, just must open Docker settings, and go to Shared Drives and active the drive where the
+On Windows, you must open Docker settings, and go to Shared Drives and active the drive where the
 files are located (typically C).
 
 ### Just give me the CSV output
 
 Linux/Mac:
 ```
-docker run -v `pwd`/data:/docker-entrypoint-initdb.d --rm postgres
+docker run -v `pwd`/data:/docker-entrypoint-initdb.d --rm -e POSTGRES_PASSWORD=1234 postgres
 ```
 Press Control-C to stop the container. (Cntr-C on Windows)
 
@@ -62,7 +62,7 @@ Press Control-C to stop the container. (Cntr-C on Windows)
 Windows:
 Run this in PowerShell:
 ```
-docker run -v `pwd`\data:/docker-entrypoint-initdb.d --rm postgres
+docker run -v `pwd`\data:/docker-entrypoint-initdb.d --rm -e POSTGRES_PASSWORD=1234 postgres
 ```
 Press Cntr-C to stop the container.
 
