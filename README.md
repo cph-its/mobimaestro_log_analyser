@@ -45,8 +45,6 @@ Computing uptime percentage requires knowledge about the time range of the datas
 
 All datasets are expected to cover whole months. Make sure this is true when you export from MobiMaestro.
 
-You must set the total number of days the dataset cover in the analyze.sql file.
-
 On Windows, you must open Docker settings, and go to Shared Drives and active the drive where the
 files are located (typically C).
 
@@ -74,14 +72,14 @@ The output will be located in data/result.csv.
 ### Running custom SQL queries
 Linux/Mac:
 ```
-docker run -v `pwd`/data:/docker-entrypoint-initdb.d --rm -d postgres > container_id
+docker run -v `pwd`/data:/docker-entrypoint-initdb.d --rm  -e POSTGRES_PASSWORD=1234 -d postgres > container_id
 docker exec -it `cat container_id` psql -U postgres
 ```
 
 Windows:
 Run this in PowerShell:
 ```
-docker run -v `pwd`\data:/docker-entrypoint-initdb.d --rm -d postgres > container_id
+docker run -v `pwd`\data:/docker-entrypoint-initdb.d --rm  -e POSTGRES_PASSWORD=1234-d postgres > container_id
 docker exec -it `cat container_id` psql -U postgres
 ```
 
