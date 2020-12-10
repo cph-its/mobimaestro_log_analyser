@@ -62,7 +62,7 @@ FROM
 	event
 	FROM events
 	WINDOW w AS (PARTITION BY object ORDER BY at)
-	ORDER BY object, at) AS disconnects
+	ORDER BY object, at, id) AS disconnects
 WHERE 
 duration IS NOT NULL AND
 prev_event IN (
@@ -224,14 +224,19 @@ ORDER BY type,object,year,month;
 
 -- devices where the last event was a disconnect
 DROP TABLE IF EXISTS by_last_seen;
-SELECT *
+SELECT type,object,event,description,at
 INTO TABLE by_last_seen
 FROM
-(SELECT e.type, e.object, e.at, e.event, e.description
-FROM (
-   SELECT object, max(at) as latest
-   FROM events GROUP BY object
-) AS x INNER JOIN events AS e ON e.object = x.object AND e.at = x.latest) AS e
+(SELECT
+DISTINCT ON (object)
+type,
+object,
+event,
+description,
+at,
+id
+FROM events
+ORDER BY object, at DESC, id DESC) AS e
 WHERE event IN (
 	'Disconnected due to fatal error',
 	'No communication',
@@ -244,8 +249,7 @@ WHERE event IN (
 	'Connection stopped',
 	'Connection error',
 	'Connect error'
-)
-ORDER BY type, at ASC;
+);
 
 
 -- export to CSV
