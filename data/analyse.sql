@@ -14,7 +14,7 @@ CREATE TABLE events
 );
 
 -- import from CSV
-COPY events(at,type,object,event,description) FROM '/docker-entrypoint-initdb.d/events.csv' DELIMITER ';' CSV HEADER;
+COPY events(at,type,object,event,description) FROM '/docker-entrypoint-initdb.d/events2020.csv' DELIMITER ';' CSV HEADER;
 
 
 CREATE INDEX idx_events_at ON events(at);
@@ -199,6 +199,8 @@ ORDER BY type,manufacturer,year,month;
 DROP TABLE IF EXISTS by_device_and_month;
 SELECT
 type,
+manufacturer,
+ag,
 object,
 year,
 month,
@@ -218,7 +220,7 @@ justify_interval(AVG(duration)) AS avg,
 justify_interval(MAX(duration)) AS max
 INTO TABLE by_device_and_month
 FROM downtime_periods
-GROUP BY year,month,object,type
+GROUP BY year,month,object,type,manufacturer,ag
 ORDER BY type,object,year,month;
 
 
@@ -253,9 +255,42 @@ WHERE event IN (
 
 
 -- export to CSV
-COPY (SELECT * from by_device ORDER BY type,manufacturer,up_percentage ASC) TO '/docker-entrypoint-initdb.d/by_device.csv' DELIMITER ',' CSV HEADER;
-COPY (SELECT * from by_type ORDER BY type) TO '/docker-entrypoint-initdb.d/by_type.csv' DELIMITER ',' CSV HEADER;
-COPY (SELECT * from by_month ORDER BY type,year,month) TO '/docker-entrypoint-initdb.d/by_month.csv' DELIMITER ',' CSV HEADER;
-COPY (SELECT * from by_device_and_month ORDER BY type,object,year,month) TO '/docker-entrypoint-initdb.d/by_device_and_month.csv' DELIMITER ',' CSV HEADER;
-COPY (SELECT * from by_last_seen ORDER BY type, at ASC) TO '/docker-entrypoint-initdb.d/by_last_seen.csv' DELIMITER ',' CSV HEADER;
+-- Excel doesn't know how to handle durations,
+-- so as part of the export, we export all duratrion as number of seconds as well
+
+COPY (
+	SELECT *,
+	ROUND(EXTRACT(epoch FROM sum)) AS sum_sec,
+	ROUND(EXTRACT(epoch FROM avg)) AS avg_sec,
+	ROUND(EXTRACT(epoch FROM max)) AS max_sec
+	FROM by_device ORDER BY type,manufacturer,up_percentage ASC
+) TO '/docker-entrypoint-initdb.d/by_device.csv' DELIMITER ',' CSV HEADER;
+
+COPY (
+	SELECT *,
+	ROUND(EXTRACT(epoch FROM sum)) AS sum_sec,
+	ROUND(EXTRACT(epoch FROM avg)) AS avg_sec,
+	ROUND(EXTRACT(epoch FROM max)) AS max_sec
+	FROM by_type ORDER BY type
+) TO '/docker-entrypoint-initdb.d/by_type.csv' DELIMITER ',' CSV HEADER;
+
+COPY (
+	SELECT *,
+	ROUND(EXTRACT(epoch FROM avg_duration)) AS avg_duration_sec,
+	ROUND(EXTRACT(epoch FROM max_duration)) AS max_duration_sec 
+	FROM by_month ORDER BY type,year,month
+) TO '/docker-entrypoint-initdb.d/by_month.csv' DELIMITER ',' CSV HEADER;
+
+COPY (
+	SELECT *,
+	ROUND(EXTRACT(epoch FROM sum)) AS sum_sec,
+	ROUND(EXTRACT(epoch FROM avg)) AS avg_sec,
+	ROUND(EXTRACT(epoch FROM max)) AS max_sec
+	FROM by_device_and_month ORDER BY type,object,year,month
+) TO '/docker-entrypoint-initdb.d/by_device_and_month.csv' DELIMITER ',' CSV HEADER;
+
+COPY (
+	SELECT *
+	FROM by_last_seen ORDER BY type, at ASC
+) TO '/docker-entrypoint-initdb.d/by_last_seen.csv' DELIMITER ',' CSV HEADER;
 
