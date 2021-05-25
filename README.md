@@ -119,6 +119,8 @@ postgres=# select type,ag,manufacturer,disconnects,up_percentage from by_device 
  RSMP VMS              | 0606                     | ITT          |          82 |         46.00
 ```
 
+Note that when you run psql, the data import and analysis might still be ongoing. You can check the modification date of the exported csv files to see when the export is done.
+
 If you want to output data to CSV, look at analyse.sql to see how it's done.
 
 ### Exiting
