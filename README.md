@@ -37,7 +37,7 @@ The file will be located at data/result.csv
 ## Usage
 
 ### Prerequisites
-You must have docker desktop installed:
+You must have docker desktop installed and running:
 https://www.docker.com/products/docker-desktop
 
 ### Dataset time range
