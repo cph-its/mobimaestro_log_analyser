@@ -117,7 +117,7 @@ event IN (
 );
 
 
--- add a period each object where the first row is a connect
+-- add a period for each object where the first row is a connect
 INSERT INTO downtime (ending, ag, month, object, event)
 SELECT * FROM
 (
@@ -135,7 +135,7 @@ WHERE event IN (
 );
 
 
--- add a period each object where the last row is a disconnect
+-- add a period for each object where the last row is a disconnect
 INSERT INTO downtime (starting, ag, month, object, event)
 SELECT * FROM
 (
