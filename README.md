@@ -40,13 +40,13 @@ The file will be located at data/result.csv
 You must have docker desktop installed and running:
 https://www.docker.com/products/docker-desktop
 
+On Windows, you must open Docker settings, and go to Shared Drives and active the drive where the
+files are located (typically C).
+
 ### Dataset time range
 Computing uptime percentage requires knowledge about the time range of the dataset.
 
 All datasets are expected to cover whole months. Make sure this is true when you export from MobiMaestro.
-
-On Windows, you must open Docker settings, and go to Shared Drives and active the drive where the
-files are located (typically C).
 
 ### Just give me the CSV output
 
