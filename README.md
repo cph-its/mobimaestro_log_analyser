@@ -1,4 +1,4 @@
-# MobiMeastro event log disconnect analyser
+# MobiMaestro event log disconnect analyser
 
 ## About
 This tool analyzes data from MobiMaestro about disconnects of equipment,
