@@ -131,7 +131,7 @@ postgres=# \q
 root@71364c7e3116 :/# exit
 ```
 
-The container is still running. You can stop if with: 
+The container is still running. You can stop it with: 
 
 Mac/Linux:
 ```
