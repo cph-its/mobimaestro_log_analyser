@@ -102,7 +102,7 @@ prev_event IN (
 	'Disconnected',
 	'Connection problem',
 	'RSU communication error',
-	'RSU not available'
+	'RSU not available',
 	'Communication failed',
 	'Connection problem',
 	'Connection stopped',
@@ -151,7 +151,7 @@ WHERE event IN (
   'Disconnected',
   'Connection problem',
   'RSU communication error',
-  'RSU not available'
+  'RSU not available',
   'Communication failed',
   'Connection problem',
   'Connection stopped',
@@ -209,6 +209,7 @@ justify_interval(AVG(duration)) AS avg,
 justify_interval(MAX(duration)) AS max
 INTO TABLE by_device
 FROM downtime,range
+WHERE downtime.duration >= interval '5 minutes'
 GROUP BY type,object,ag,type_code,manufacturer,nr,seconds;
 
 
@@ -224,6 +225,7 @@ justify_interval(AVG(duration)) AS avg,
 justify_interval(MAX(duration)) AS max
 INTO TABLE by_type
 FROM downtime,range
+WHERE downtime.duration >= interval '5 minutes'
 GROUP BY type,seconds;
 
 -- by device type and manufacturer
@@ -240,6 +242,7 @@ justify_interval(AVG(duration)) AS avg,
 justify_interval(MAX(duration)) AS max
 INTO TABLE by_type_and_manufacturer
 FROM downtime,range
+WHERE downtime.duration >= interval '5 minutes'
 GROUP BY type,manufacturer,seconds;
 
 -- FIXME: we need a list of devices to corectly compute averages.
@@ -267,6 +270,7 @@ justify_interval(AVG(duration)) AS avg_duration,
 justify_interval(MAX(duration)) AS max_duration
 INTO TABLE by_month
 FROM downtime_periods
+WHERE downtime_periods.duration >= interval '5 minutes'
 GROUP BY year,month,type,manufacturer
 ORDER BY type,manufacturer,year,month;
 
@@ -296,6 +300,7 @@ justify_interval(AVG(duration)) AS avg,
 justify_interval(MAX(duration)) AS max
 INTO TABLE by_device_and_month
 FROM downtime_periods
+WHERE downtime_periods.duration >= interval '5 minutes'
 GROUP BY year,month,object,type,manufacturer,ag
 ORDER BY type,object,year,month;
 
@@ -318,7 +323,7 @@ WHERE event IN (
   'Disconnected',
   'Connection problem',
   'RSU communication error',
-  'RSU not available'
+  'RSU not available',
   'Communication failed',
   'Connection problem',
   'Connection stopped',
